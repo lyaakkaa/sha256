@@ -33,3 +33,20 @@ def generate_hash(message: bytearray) -> bytearray:
 
     # Разбиваем сообщение на блоки по 512 бит
     blocks = [message[i:i+64] for i in range(0, len(message), 64)]
+
+
+
+
+
+# Вспомогательные функции для SHA-256
+def sigma0(x):
+    return _rotate_right(x, 7) ^ _rotate_right(x, 18) ^ (x >> 3)
+
+def sigma1(x):
+    return _rotate_right(x, 17) ^ _rotate_right(x, 19) ^ (x >> 10)
+
+def capsigma0(x):
+    return _rotate_right(x, 2) ^ _rotate_right(x, 13) ^ _rotate_right(x, 22)
+
+def capsigma1(x):
+    return _rotate_right(x, 6) ^ _rotate_right(x, 11) ^ _rotate_right(x, 25)
