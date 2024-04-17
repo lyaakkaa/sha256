@@ -24,12 +24,12 @@ def generate_hash(message: bytearray) -> bytearray:
     elif not isinstance(message, bytearray):
         raise TypeError
 
-    # Padding
-    length = len(message) * 8  # len(message) is number of BYTES!!!
-    message.append(0x80)
-    while (len(message) * 8 + 64) % 512 != 0:
+    # Добавляем дополнение к сообщению (Padding)
+    length = len(message) * 8  # Длина сообщения в битах
+    message.append(0x80)  # Добавляем 1 после сообщения
+    while (len(message) * 8 + 64) % 512 != 0:  # Добавляем нули до кратности 512 битам
         message.append(0x00)
+    message += length.to_bytes(8, 'big')  # Добавляем длину сообщения в конец
 
-    message += length.to_bytes(8, 'big')  # pad to 8 bytes or 64 bits
-
-    assert (len(message) * 8) % 512 == 0, "Padding did not complete properly!"
+    # Разбиваем сообщение на блоки по 512 бит
+    blocks = [message[i:i+64] for i in range(0, len(message), 64)]
