@@ -23,3 +23,13 @@ def generate_hash(message: bytearray) -> bytearray:
         message = bytearray(message)
     elif not isinstance(message, bytearray):
         raise TypeError
+
+    # Padding
+    length = len(message) * 8  # len(message) is number of BYTES!!!
+    message.append(0x80)
+    while (len(message) * 8 + 64) % 512 != 0:
+        message.append(0x00)
+
+    message += length.to_bytes(8, 'big')  # pad to 8 bytes or 64 bits
+
+    assert (len(message) * 8) % 512 == 0, "Padding did not complete properly!"
