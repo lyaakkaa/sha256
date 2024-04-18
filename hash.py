@@ -35,30 +35,36 @@ def generate_hash(message: bytearray) -> bytearray:
     blocks = [message[i:i+64] for i in range(0, len(message), 64)]
 
 
-# Инициализируем переменные состояния хэша
-h = [
-        0x6a09e667, 0xbb67ae85, 0x3c6ef372, 0xa54ff53a,
-        0x510e527f, 0x9b05688c, 0x1f83d9ab, 0x5be0cd19
+    # Инициализируем переменные состояния хэша
+    h = [
+            0x6a09e667, 0xbb67ae85, 0x3c6ef372, 0xa54ff53a,
+            0x510e527f, 0x9b05688c, 0x1f83d9ab, 0x5be0cd19
+        ]
+
+    # Вычисляем SHA-256 хэш
+    for block in blocks:
+        w = [0] * 64
+        for t in range(64):
+            if t < 16:
+                w[t] = int.from_bytes(block[t*4:(t+1)*4], 'big')
+            else:
+                w[t] = (sigma1(w[t-2]) + w[t-7] + sigma0(w[t-15]) + w[t-16]) % (1 << 32)
+
+        a, b, c, d, e, f, g, h0 = h
+        for t in range(64):
+            t1 = (h0 + capsigma1(e) + ch(e, f, g) + K[t] + w[t]) % (1 << 32)
+            t2 = (capsigma0(a) + maj(a, b, c)) % (1 << 32)
+            h0, h1, h2, h3, h4, h5, h6, h7 = (
+                (t1 + t2) % (1 << 32), a, b, c, (d + t1) % (1 << 32), e, f, g
+            )
+
+    # Обновляем переменные состояния
+    h = [
+        (x + y) % (1 << 32) for x, y in zip(h, [h0, h1, h2, h3, h4, h5, h6, h7])
     ]
 
-# Вычисляем SHA-256 хэш
-for block in blocks:
-    w = [0] * 64
-    for t in range(64):
-        if t < 16:
-            w[t] = int.from_bytes(block[t*4:(t+1)*4], 'big')
-        else:
-            w[t] = (sigma1(w[t-2]) + w[t-7] + sigma0(w[t-15]) + w[t-16]) % (1 << 32)
-
-    a, b, c, d, e, f, g, h0 = h
-    for t in range(64):
-        t1 = (h0 + capsigma1(e) + ch(e, f, g) + K[t] + w[t]) % (1 << 32)
-        t2 = (capsigma0(a) + maj(a, b, c)) % (1 << 32)
-        h0, h1, h2, h3, h4, h5, h6, h7 = (
-            (t1 + t2) % (1 << 32), a, b, c, (d + t1) % (1 << 32), e, f, g
-        )
-
-
+    # Собираем хэш из переменных состояния
+    return bytearray(b''.join(x.to_bytes(4, 'big') for x in h))
 
 
 # Вспомогательные функции для SHA-256
@@ -87,7 +93,7 @@ def _rotate_right(num, shift, size=32):
     return (num >> shift) | (num << (size - shift)) & 0xFFFFFFFF
 
 # Основная часть программы
-if name == "main":
+if __name__ == "main":
     try:
         data = input("Введите текст для хэширования: ")
         encrypted_data = generate_hash(data.encode()).hex()
